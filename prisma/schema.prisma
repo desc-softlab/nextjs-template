@@ -1,0 +1,99 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum EUserType {
+  ADMIN
+}
+
+model User {
+  id          String @id @default(uuid()) @db.Uuid()
+  email       String     @unique
+  createdAt   DateTime   @db.Timestamp(6)
+  password    String     @db.VarChar
+  type EUserType
+  emailVerified  DateTime?
+  image          String? @default("")
+  isOAuth     Boolean @default(false)
+  accounts       Account[]
+}
+
+model Account {
+    id                 String  @id @default(uuid())
+    userId             String  @db.Uuid()
+    provider           String
+    providerAccountId  String
+    refreshToken       String?
+    accessToken        String?
+    accessTokenExpires DateTime?
+    user               User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+    @@unique([provider, providerAccountId])
+}
+
+model Admin {
+  id String @id @default(uuid()) @db.Uuid()
+  name String
+  userId String @db.Uuid()
+  roleId String @db.Uuid()
+  Role Role @relation(fields: [roleId], references: [id])
+
+}
+
+model Role {
+  id String @id @default(uuid()) @db.Uuid()
+  name String @unique
+  description String
+  createdAt DateTime
+  permissions Permission[] @relation("RolePermission")
+  admins Admin[]
+}
+
+model Permission {
+  id String @id @default(uuid()) @db.Uuid()
+  name String @unique
+  description String
+  createdAt DateTime
+  roles Role[] @relation("RolePermission")
+}
+
+enum ELogType {
+  WEB_VISIT
+  CREATE
+  UPDATE
+  DELETE
+  LOGIN
+  LOGOUT
+}
+
+enum ELogSeverity {
+  INFO 
+  ERROR
+  WARNING
+  CRITICAL
+}
+
+model Log {
+  id Int @id @default(autoincrement())
+  name String
+  type ELogType
+  message    String?
+  severity   ELogSeverity
+  ipAddress String
+  createdAt DateTime
+
+  userId String?
+  entityId String?
+  path String
+
+  createAt DateTime
+
+  @@index([userId])
+  @@index([type])
+  @@index([createdAt])
+}

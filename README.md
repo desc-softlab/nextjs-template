@@ -1,6 +1,6 @@
 
 # 🧩 Next.js Starter Template – Desc Softlab Ltd
-<img src="/public/logo/Desc Softlab Logo.png" styles={{"border-radius":"50%"}} alt="Desc Softlab Logo" width="150" />
+<img src="/public/logo/Desc Softlab Logo.png" style="border-radius: 50%;" alt="Desc Softlab Logo" width="150" />
 
 Welcome to the official Next.js starter template from **[Desc Softlab Ltd](https://descsoftlab.com)** – a modern and opinionated boilerplate designed to help developers kickstart robust web applications with minimal setup and maximum flexibility.
 

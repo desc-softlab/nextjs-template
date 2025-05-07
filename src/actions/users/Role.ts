@@ -38,15 +38,18 @@ export async function deleteRole (id:string) {
      }
 }
 
-export const fetchRoles = cache(async <T extends Prisma.RoleSelect>(selectType: T, search?: Prisma.RoleWhereInput, take:number = 20, skip:number = 0):Promise<{data: Prisma.RoleGetPayload<{select: T}>[], pagination: {total:number}}> => {
-     try {
-          const res = await prisma.role.findMany({where: search, take, skip, select: selectType});
-          const total = await prisma.role.count({where:search});
-          return {data:res, pagination:{total}};
-     } catch (error) {
-          console.log("Error fetching Roles: ", error);
-          return {data:[], pagination:{total:0}}
-     }
+export const fetchRoles = cache(async <T extends Prisma.RoleSelect>(
+     selectType: T, search?: Prisma.RoleWhereInput, take:number = 20, skip:number = 0,
+     orderBy: Prisma.RoleOrderByWithRelationInput = { createdAt: 'desc' }
+):Promise<{data: Prisma.RoleGetPayload<{select: T}>[], pagination: {total:number}}> => {
+try {
+     const res = await prisma.role.findMany({where: search, take, skip, select: selectType, orderBy});
+     const total = await prisma.role.count({where:search});
+     return {data:res, pagination:{total}};
+} catch (error) {
+     console.log("Error fetching Roles: ", error);
+     return {data:[], pagination:{total:0}}
+}
 });
 
 export const fetchRoleById = cache(async <T extends Prisma.RoleSelect>(id:string, selectType: T): Promise<Prisma.RoleGetPayload<{select:T}> | null> => {

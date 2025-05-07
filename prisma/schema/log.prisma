@@ -1,0 +1,35 @@
+enum ELogType {
+     WEB_VISIT
+     CREATE
+     UPDATE
+     DELETE
+     LOGIN
+     LOGOUT
+}
+
+enum ELogSeverity {
+     INFO 
+     ERROR
+     WARNING
+     CRITICAL
+}
+
+model Log {
+     id Int @id @default(autoincrement())
+     name String
+     type ELogType
+     message    String?
+     severity   ELogSeverity
+     ipAddress String
+     createdAt DateTime
+
+     userId String?
+     entityId String?
+     path String
+
+     createAt DateTime
+
+     @@index([userId])
+     @@index([type])
+     @@index([createdAt])
+}

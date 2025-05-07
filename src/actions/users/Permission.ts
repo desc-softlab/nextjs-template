@@ -38,15 +38,18 @@ export async function deletePermission (id:string) {
      }
 }
 
-export const fetchPermissions = cache(async <T extends Prisma.PermissionSelect>(selectType: T, search?: Prisma.PermissionWhereInput, take:number = 20, skip:number = 0):Promise<{data: Prisma.PermissionGetPayload<{select: T}>[], pagination: {total:number}}> => {
-     try {
-          const res = await prisma.permission.findMany({where: search, take, skip, select: selectType});
-          const total = await prisma.permission.count({where:search});
-          return {data:res, pagination:{total}};
-     } catch (error) {
-          console.log("Error fetching Permissions: ", error);
-          return {data:[], pagination:{total:0}}
-     }
+export const fetchPermissions = cache(async <T extends Prisma.PermissionSelect>(
+     selectType: T, search?: Prisma.PermissionWhereInput, take:number = 20, skip:number = 0,
+     orderBy: Prisma.PermissionOrderByWithRelationInput = { createdAt: 'desc' }
+):Promise<{data: Prisma.PermissionGetPayload<{select: T}>[], pagination: {total:number}}> => {
+try {
+     const res = await prisma.permission.findMany({where: search, take, skip, select: selectType, orderBy});
+     const total = await prisma.permission.count({where:search});
+     return {data:res, pagination:{total}};
+} catch (error) {
+     console.log("Error fetching Permissions: ", error);
+     return {data:[], pagination:{total:0}}
+}
 });
 
 export const fetchPermissionById = cache(async <T extends Prisma.PermissionSelect>(id:string, selectType: T): Promise<Prisma.PermissionGetPayload<{select:T}> | null> => {

@@ -38,9 +38,9 @@ export async function deleteUser (id:string) {
      }
 }
 
-export const fetchUsers = cache(async <T extends Prisma.UserSelect>(selectType: T, search?: Prisma.UserWhereInput, take:number = 20, skip:number = 0):Promise<{data: Prisma.UserGetPayload<{select: T}>[], pagination: {total:number}}> => {
+export const fetchUsers = cache(async <T extends Prisma.UserSelect>(selectType: T, search?: Prisma.UserWhereInput, take:number = 20, skip:number = 0, orderBy: Prisma.UserOrderByWithRelationInput = { createdAt: 'desc' }):Promise<{data: Prisma.UserGetPayload<{select: T}>[], pagination: {total:number}}> => {
      try {
-          const res = await prisma.user.findMany({where: search, take, skip, select: selectType});
+          const res = await prisma.user.findMany({where: search, take, skip, select: selectType, orderBy});
           const total = await prisma.user.count({where:search});
           return {data:res, pagination:{total}};
      } catch (error) {

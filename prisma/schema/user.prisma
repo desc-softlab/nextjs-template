@@ -1,0 +1,67 @@
+enum EUserType {
+     ADMIN
+     UNKNOWN
+}
+
+enum EUserStatus {
+     ACTIVE 
+     INACTIVE
+}
+
+model User {
+     id          String @id @default(uuid()) @db.Uuid()
+     email       String     @unique
+     createdAt   DateTime
+     updatedAt DateTime  
+     password    String  
+     type EUserType
+     status EUserStatus
+     emailVerified  DateTime?
+     image          String @default("")
+     isOAuth     Boolean @default(false)
+     accounts       Account[]
+     admins Admin[]
+}
+
+model Account {
+     id                 String  @id @default(uuid())
+     userId             String  @db.Uuid()
+     provider           String
+     providerAccountId  String
+     refreshToken       String?
+     accessToken        String?
+     accessTokenExpires DateTime?
+     user               User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+     @@unique([provider, providerAccountId])
+}
+
+model Admin {
+     id String @id @default(uuid()) @db.Uuid()
+     name String
+     createdAt DateTime
+     updatedAt DateTime
+     userId String @db.Uuid()
+     roleId String @db.Uuid()
+     Role Role @relation(fields: [roleId], references: [id])
+     user User @relation(fields: [userId], references: [id])
+
+}
+
+model Role {
+     id String @id @default(uuid()) @db.Uuid()
+     name String @unique
+     createdAt DateTime
+     updatedAt DateTime
+     permissions Permission[] @relation("RolePermission")
+     admins Admin[]
+}
+
+model Permission {
+     id String @id @default(uuid()) @db.Uuid()
+     name String @unique
+     description String
+     createdAt DateTime
+     updatedAt DateTime
+     roles Role[] @relation("RolePermission")
+}

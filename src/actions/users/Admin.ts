@@ -38,9 +38,12 @@ export async function deleteAdmin (id:string) {
      }
 }
 
-export const fetchAdmins = cache(async <T extends Prisma.AdminSelect>(selectType: T, search?: Prisma.AdminWhereInput, take:number = 20, skip:number = 0):Promise<{data: Prisma.AdminGetPayload<{select: T}>[], pagination: {total:number}}> => {
+export const fetchAdmins = cache(async <T extends Prisma.AdminSelect>(
+          selectType: T, search?: Prisma.AdminWhereInput, take:number = 20, skip:number = 0,
+          orderBy: Prisma.AdminOrderByWithRelationInput = { createdAt: 'desc' }
+     ):Promise<{data: Prisma.AdminGetPayload<{select: T}>[], pagination: {total:number}}> => {
      try {
-          const res = await prisma.admin.findMany({where: search, take, skip, select: selectType});
+          const res = await prisma.admin.findMany({where: search, take, skip, select: selectType, orderBy});
           const total = await prisma.admin.count({where:search});
           return {data:res, pagination:{total}};
      } catch (error) {

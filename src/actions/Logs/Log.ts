@@ -38,15 +38,18 @@ export async function deleteLog (id:number) {
      }
 }
 
-export const fetchLogs = cache(async <T extends Prisma.LogSelect>(selectType: T, search?: Prisma.LogWhereInput, take:number = 20, skip:number = 0):Promise<{data: Prisma.LogGetPayload<{select: T}>[], pagination: {total:number}}> => {
-     try {
-          const res = await prisma.log.findMany({where: search, take, skip, select: selectType});
-          const total = await prisma.log.count({where:search});
-          return {data:res, pagination:{total}};
-     } catch (error) {
-          console.log("Error fetching Logs: ", error);
-          return {data:[], pagination:{total:0}}
-     }
+export const fetchLogs = cache(async <T extends Prisma.LogSelect>(
+     selectType: T, search?: Prisma.LogWhereInput, take:number = 20, skip:number = 0,
+     orderBy: Prisma.LogOrderByWithRelationInput = { createdAt: 'desc' }
+):Promise<{data: Prisma.LogGetPayload<{select: T}>[], pagination: {total:number}}> => {
+try {
+     const res = await prisma.log.findMany({where: search, take, skip, select: selectType, orderBy});
+     const total = await prisma.log.count({where:search});
+     return {data:res, pagination:{total}};
+} catch (error) {
+     console.log("Error fetching Logs: ", error);
+     return {data:[], pagination:{total:0}}
+}
 });
 
 export const fetchLogById = cache(async <T extends Prisma.LogSelect>(id:number, selectType: T): Promise<Prisma.LogGetPayload<{select:T}> | null> => {

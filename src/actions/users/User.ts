@@ -57,4 +57,14 @@ export const fetchUserById = cache(async <T extends Prisma.UserSelect>(id:string
           console.log(`Error fetching user data for id: ${id}`, error);
           return null;
      }
+});
+
+export const fetchUserByEmail = cache(async <T extends Prisma.UserSelect>(email:string, selectType: T): Promise<Prisma.UserGetPayload<{select:T}> | null> => {
+     try {
+          const res= await prisma.user.findUnique({where:{email},select: selectType});
+          return res;
+     } catch (error) {
+          console.log(`Error fetching User data for id: ${email}`, error);
+          return null;
+     }
 })

@@ -1,19 +1,26 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import prisma from "@/lib/prisma";
-import { DefaultSession, NextAuthOptions, Session as NextAuthSession } from "next-auth";
+import { DefaultSession, DefaultUser, NextAuthOptions, Session as NextAuthSession } from "next-auth";
 import GoogleProvider from "next-auth/providers/google";
 import CredentialsProvider from "next-auth/providers/credentials";
 import { PrismaAdapter } from "@next-auth/prisma-adapter";
 import { verifyPassword } from "@/util/bcryptFuncs";
-import { TUser } from "./Entities";
+import { EUserStatus, EUserType, Prisma } from "@prisma/client";
+import { fetchUserByEmail } from "@/actions/users/User";
 
 declare module "next-auth" {
      interface Session extends DefaultSession {
           user: {
-               type?: string | null;
+               type: EUserType;
           } & DefaultSession["user"];
      }
+
+     interface User extends DefaultUser {
+          type?: EUserType;
+     }
 }
+
+const UserSelect = {id:true, email:true, password:true, type:true, status:true} satisfies Prisma.UserSelect;
 
 export const authOptions: NextAuthOptions = {
      adapter: PrismaAdapter(prisma),
@@ -48,17 +55,16 @@ export const authOptions: NextAuthOptions = {
                     };
 
                     
-                    const user = await prisma.user.findUnique({ where: { email }, include: {admin:true, client: true, vendor:true} }) as unknown as TUser ;
+                    const user = await fetchUserByEmail(email, UserSelect);
                     if (!user || !user.password) return null;
+                    if(user.status === EUserStatus.INACTIVE) return null;
 
-                         // Validate password (use bcrypt or another hashing library)
+                    // Validate password (use bcrypt or another hashing library)
                     const isPasswordValid = await verifyPassword(password,user.password);
                     if (!isPasswordValid) return null;
-                    const type = user.client ? "client" : user.vendor ? "vendor" : user.admin ? "admin" : "unkown";
 
                     return {
                          ...user,
-                         type,
                          id: (user.id || "").toString(),
                     };
                },
@@ -69,8 +75,7 @@ export const authOptions: NextAuthOptions = {
           maxAge: 2 * 60 * 60,
      },
      jwt: {
-          secret: process.env.NEXTAUTH_SECRET,
-          maxAge: 2 * 60 * 60, // Ensure JWT also expires after 2 hours
+          maxAge: 2 * 60 * 60,
      },
      cookies: {
           sessionToken: {
@@ -87,18 +92,20 @@ export const authOptions: NextAuthOptions = {
           async signIn({ account, profile }) {
                if (account?.provider === "google" && profile && profile.email) {
                     const gProfile = profile as { email: string; name?: string; picture?: string };
-                    let user = await prisma.user.findUnique({ where: { email: profile.email } });
+                    let user = await fetchUserByEmail(profile.email, UserSelect);
           
                     if (!user) {
                          // Create the new user in the database
                          user = await prisma.user.create({
                               data: {
                                    email: gProfile.email,
-                                   image: gProfile.picture || "",
+                                   image: gProfile.picture,
                                    password: "",
                                    createdAt: new Date(),
-                                   status: true,
-                                   type: "unkown",
+                                   isOAuth: true,
+                                   updatedAt: new Date(),
+                                   type: EUserType.UNKNOWN,
+                                   status: EUserStatus.ACTIVE
                                    
                               },
                          });
@@ -133,10 +140,10 @@ export const authOptions: NextAuthOptions = {
           },
           async jwt({token, user}) {
                if (user) {
-                    const myUser = user as unknown as TUser;
-                    token.type = myUser.type || "unkown";
+                    const myUser = user;
                     token.id = myUser.id;
                     token.email = myUser.email;
+                    token.type = myUser.type;
                     token.picture = myUser.image
                     token.iat = Math.floor(Date.now() / 1000); // Issue time
                     token.exp = (token.iat as number) + 2 * 60 * 60;
@@ -152,7 +159,7 @@ export const authOptions: NextAuthOptions = {
                     session.user = {
                          ...session.user,
                          email: token.email,
-                         type: token.type || "unknown",
+                         type: token.type,
                          image: token.picture || null
                     };
                }else {
